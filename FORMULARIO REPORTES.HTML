@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gestión de Reportes</title>
+  <!-- Incluir Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    /* Reset básico */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+      color: #333;
+    }
+    h2, h3 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    /* Transiciones */
+    .fade {
+      opacity: 0;
+      transform: translateY(-20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    /* Formulario de login */
+    #login_form {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 400px;
+      margin: 40px auto;
+      text-align: center;
+    }
+    #login_form label {
+      display: block;
+      margin-bottom: 5px;
+      text-align: left;
+    }
+    #login_form input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    #login_form button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #007BFF;
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    #login_form button:hover {
+      background: #0056b3;
+    }
+    /* Menú principal */
+    #menu_principal {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 40px auto;
+      max-width: 600px;
+    }
+    #menu_principal button {
+      flex: 1;
+      padding: 15px;
+      font-size: 16px;
+      background: #28a745;
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.3s ease;
+    }
+    #menu_principal button:hover {
+      background: #218838;
+      transform: scale(1.03);
+    }
+    /* Formulario de Reporte de Mantenimiento */
+    #form_reporte {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      margin: 20px auto;
+      display: none;
+    }
+    .info-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+      text-align: center;
+    }
+    .info-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-weight: bold;
+    }
+    .info-box input,
+    .info-box select,
+    .info-box textarea {
+      width: 100%;
+      padding: 8px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-top: 5px;
+    }
+    button[type="button"] {
+      margin-top: 15px;
+      padding: 12px 25px;
+      font-size: 16px;
+      background: #007BFF;
+      border: none;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button[type="button"]:hover {
+      background: #0056b3;
+    }
+    /* Sección para materiales */
+    #lista_materiales {
+      margin-top: 15px;
+    }
+    .material-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .material-row select,
+    .material-row input {
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .material-row button {
+      background: #dc3545;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    #btnAgregarMaterial {
+      background: #28a745;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 10px;
+      cursor: pointer;
+      margin-top: 10px;
+      display: block;
+      width: 100%;
+      font-size: 16px;
+    }
+    button[type="submit"] {
+      background: #007BFF;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 12px 25px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+      display: block;
+      width: 100%;
+    }
+    /* Sección de Ver Reportes Realizados */
+    #ver_reportes {
+      display: none;
+      max-width: 800px;
+      margin: 20px auto;
+    }
+    #map_reportes {
+      width: 100%;
+      height: 400px;
+      margin-bottom: 10px;
+    }
+    #detalle_reporte {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    #btn_regresar_reportes {
+      margin-bottom: 10px;
+      background: #6c757d;
+    }
+    @media screen and (max-width: 600px) {
+      .info-container {
+        grid-template-columns: 1fr;
+      }
+      .material-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+  </style>
+  <!-- Incluir Leaflet JS y CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+  <h2>Gestión de Reportes</h2>
+  
+  <!-- FORMULARIO DE LOGIN -->
+  <div id="login_form" class="fade visible">
+    <h3>Iniciar Sesión</h3>
+    <label>Usuario</label>
+    <input type="text" id="username" placeholder="Ingrese su usuario">
+    <label>Contraseña</label>
+    <input type="password" id="password" placeholder="Ingrese su contraseña">
+    <button onclick="login()">Acceder</button>
+  </div>
+  
+  <!-- MENÚ PRINCIPAL -->
+  <div id="menu_principal" class="fade hidden" style="display:none;">
+    <button id="btn_reporte">Realizar reporte</button>
+    <button id="btn_ver">Ver Reportes Realizados</button>
+    <button id="btn_csv">Cargar Excel/CSV</button>
+  </div>
+  
+  <!-- FORMULARIO DE REPORTE DE MANTENIMIENTO -->
+  <form id="form_reporte" class="fade hidden">
+    <!-- Botón de regresar -->
+    <button type="button" id="btn_regresar" onclick="regresarMenu()">← Regresar</button>
+    <h3>Reporte de Mantenimiento</h3>
+    <!-- Datos generales -->
+    <div class="info-container">
+      <div class="info-box">
+        <label for="reporte_mant">REPORTE (numérico)</label>
+        <input type="number" id="reporte_mant" required>
+      </div>
+      <div class="info-box">
+        <label for="fecha_mantenimiento">FECHA MANTENIMIENTO</label>
+        <input type="date" id="fecha_mantenimiento" required>
+      </div>
+      <div class="info-box">
+        <label for="circuito">CIRCUITO</label>
+        <select id="circuito" required>
+          <option value="" disabled selected>Seleccione...</option>
+        </select>
+      </div>
+    </div>
+    
+    <h3>Materiales Utilizados</h3>
+    <p id="mensaje_cargando" style="text-align:center;">Cargando materiales...</p>
+    <div id="lista_materiales"></div>
+    <button type="button" id="btnAgregarMaterial">Agregar Material</button>
+    
+    <!-- Ubicación y botón para captar coordenadas -->
+    <div class="info-container" style="margin-top: 15px;">
+      <div class="info-box">
+        <label for="lat">LAT</label>
+        <input type="text" id="lat" placeholder="Ingrese latitud" required>
+      </div>
+      <div class="info-box">
+        <label for="lon">LON</label>
+        <input type="text" id="lon" placeholder="Ingrese longitud" required>
+      </div>
+    </div>
+    <div class="info-box" style="margin-top: 10px; text-align: center;">
+      <button type="button" onclick="captarCoordenadas()">Captar Coordenadas</button>
+    </div>
+    
+    <!-- Supervisor y Cuadrillas -->
+    <div class="info-container" style="margin-top: 15px;">
+      <div class="info-box">
+        <label for="supervisor">SUPERVISOR</label>
+        <select id="supervisor" required>
+          <option value="" disabled selected>Seleccione...</option>
+        </select>
+      </div>
+      <div class="info-box">
+        <label for="tipo_cuadrilla">Tipo de Cuadrilla</label>
+        <select id="tipo_cuadrilla" required>
+          <option value="" disabled selected>Seleccione...</option>
+          <option value="PESADAS">PESADAS</option>
+          <option value="LIVIANAS">LIVIANAS</option>
+        </select>
+      </div>
+    </div>
+    <!-- Select para la cuadrilla filtrada -->
+    <div class="info-box" style="margin-top: 15px;">
+      <label for="cuadrillaSelect">Cuadrilla</label>
+      <select id="cuadrillaSelect" required>
+        <option value="" disabled selected>Seleccione tipo primero</option>
+      </select>
+    </div>
+    
+    <div class="info-box" style="margin-top: 15px;">
+      <label for="observaciones">OBSERVACIONES</label>
+      <textarea id="observaciones" rows="3" placeholder="Información adicional..."></textarea>
+    </div>
+    
+    <button type="submit">Guardar Reporte</button>
+  </form>
+  
+  <!-- SECCIÓN DE VER REPORTES REALIZADOS -->
+<div id="ver_reportes" class="fade hidden">
+  <button type="button" id="btn_regresar_reportes" onclick="regresarMenu()">← Regresar</button>
+  <h3>Reportes Realizados</h3>
+  
+  <!-- MENSAJE DE CARGA -->
+  <div id="mensaje_carga_mapa" style="text-align:center; margin-bottom:10px; font-weight:bold;">
+    Cargando Información...
+  </div>
+  
+  <!-- MAPA -->
+  <div id="map_reportes"></div>
+
+  <!-- DETALLES DEL REPORTE -->
+  <div id="detalle_reporte"></div>
+</div>
+  
+  <script>
+    /***** Funciones de Transición y Menú *****/
+    function login() {
+      const user = document.getElementById("username").value;
+      const pass = document.getElementById("password").value;
+      if (user === "DistSPS" && pass === "Distribucion2025*") {
+        document.getElementById("login_form").classList.remove("visible");
+        document.getElementById("login_form").classList.add("hidden");
+        setTimeout(() => {
+          document.getElementById("login_form").style.display = "none";
+          document.getElementById("menu_principal").style.display = "flex";
+          setTimeout(() => {
+            document.getElementById("menu_principal").classList.remove("hidden");
+            document.getElementById("menu_principal").classList.add("visible");
+          }, 50);
+        }, 500);
+      } else {
+        alert("Credenciales incorrectas");
+      }
+    }
+    
+    // Botones del menú principal
+    const btnReporte = document.getElementById("btn_reporte");
+    const btnVer = document.getElementById("btn_ver");
+    const btnCsv = document.getElementById("btn_csv");
+    const formReporte = document.getElementById("form_reporte");
+    const verReportes = document.getElementById("ver_reportes");
+    
+    btnReporte.addEventListener("click", () => {
+      document.getElementById("menu_principal").classList.remove("visible");
+      document.getElementById("menu_principal").classList.add("hidden");
+      setTimeout(() => {
+        document.getElementById("menu_principal").style.display = "none";
+        formReporte.style.display = "block";
+        setTimeout(() => {
+          formReporte.classList.remove("hidden");
+          formReporte.classList.add("visible");
+        }, 50);
+      }, 500);
+    });
+    
+    btnVer.addEventListener("click", () => {
+      // Al hacer clic en "Ver Reportes Realizados", ocultamos el menú y mostramos la sección de reportes
+      document.getElementById("menu_principal").classList.remove("visible");
+      document.getElementById("menu_principal").classList.add("hidden");
+      setTimeout(() => {
+        document.getElementById("menu_principal").style.display = "none";
+        verReportes.style.display = "block";
+        setTimeout(() => {
+          verReportes.classList.remove("hidden");
+          verReportes.classList.add("visible");
+          cargarReportes(); // Función para cargar y mostrar los reportes en el mapa
+        }, 50);
+      }, 500);
+    });
+    
+    btnCsv.addEventListener("click", () => {
+      alert("Aquí se cargará un archivo Excel/CSV (en construcción).");
+    });
+    
+    function regresarMenu() {
+      // Función para regresar al menú principal desde cualquier sección (formulario o ver reportes)
+      document.getElementById("form_reporte").classList.remove("visible");
+      document.getElementById("form_reporte").classList.add("hidden");
+      verReportes.classList.remove("visible");
+      verReportes.classList.add("hidden");
+      setTimeout(() => {
+        document.getElementById("form_reporte").style.display = "none";
+        verReportes.style.display = "none";
+        document.getElementById("menu_principal").style.display = "flex";
+        setTimeout(() => {
+          document.getElementById("menu_principal").classList.remove("hidden");
+          document.getElementById("menu_principal").classList.add("visible");
+        }, 50);
+      }, 500);
+    }
+    
+    /***** Endpoints *****/
+    const urlCatalogo = "https://script.google.com/macros/s/AKfycby3uvB909R5dTbOs0U8apxUvvhKh5J7zezQDMfT35Zrl85YaYzTyHyKBlB5LB98wu5y/exec";
+    const urlCuadrillas = "https://script.google.com/macros/s/AKfycbx4hFZU-fCkgT5gFWv9XqjuRrvFN6oSdFv3BjCNjCLURsK6sJiuBMRcVLpel0ufgmtO/exec";
+    const urlCircuitos = "https://script.google.com/macros/s/AKfycbzeTZm-ynKcqVaK2pIKmXux5lsFY_TocOVW1qzr5mK_z9pRABu_WkE7r6BSitaDcscksA/exec";
+    const urlSupervisores = "https://script.google.com/macros/s/AKfycbwtXZBQCdvT-QUQl1vTpyjGYTOkw04ZJ0_VfpvVMK0Jk7tWwbIVyPBGiNJm-JsmdoEBBg/exec";
+    // Nuevo endpoint para guardar reportes
+    const urlGuardar = "https://script.google.com/macros/s/AKfycbx6CehrV-xiMuY4sJpXeQChOjGyBPgXn2JGNCCi9pGO3eNx1pEC-MwfxlVVr12YhOkX/exec";
+    // Nuevo endpoint para obtener los reportes guardados (se asume que tienes un doGet que devuelve la hoja REPORTES en JSON)
+    const urlReportes = "https://script.google.com/macros/s/AKfycbz0ln5v0XUJD2nH-uPsN-tpHwUWVy-QveQEKG5Y0-5IaFUtbCn59rhzRUxoRvWSxsUSFQ/exec"; // Reemplaza con tu URL real para obtener reportes.
+    
+    let materialesData = [];
+    let tiposUnicos = [];
+    let cuadrillasData = [];
+    
+    // Cargar materiales
+    document.getElementById("btnAgregarMaterial").disabled = true;
+    document.getElementById("mensaje_cargando").style.display = "block";
+    fetch(urlCatalogo)
+      .then(res => res.json())
+      .then(data => {
+        materialesData = data;
+        const tiposSet = new Set(data.map(item => item.tipo));
+        tiposUnicos = Array.from(tiposSet);
+        document.getElementById("btnAgregarMaterial").disabled = false;
+        document.getElementById("mensaje_cargando").style.display = "none";
+      })
+      .catch(err => {
+        console.error("Error al cargar materiales:", err);
+        document.getElementById("mensaje_cargando").textContent = "Error al cargar materiales";
+      });
+    
+    // Cargar circuitos
+    fetch(urlCircuitos)
+      .then(res => res.json())
+      .then(data => {
+        const selectCircuito = document.getElementById("circuito");
+        selectCircuito.innerHTML = "<option value='' disabled selected>Seleccione...</option>";
+        data.forEach(item => {
+          const opt = document.createElement("option");
+          opt.value = item.circuito;
+          opt.textContent = item.circuito;
+          selectCircuito.appendChild(opt);
+        });
+      })
+      .catch(err => console.error("Error al cargar circuitos:", err));
+    
+    // Cargar supervisores
+    fetch(urlSupervisores)
+      .then(res => res.json())
+      .then(data => {
+        const selectSupervisor = document.getElementById("supervisor");
+        selectSupervisor.innerHTML = "<option value='' disabled selected>Seleccione...</option>";
+        data.forEach(item => {
+          const opt = document.createElement("option");
+          opt.value = item.supervisor;
+          opt.textContent = item.supervisor;
+          selectSupervisor.appendChild(opt);
+        });
+      })
+      .catch(err => console.error("Error al cargar supervisores:", err));
+    
+    // Cargar cuadrillas
+    fetch(urlCuadrillas)
+      .then(res => res.json())
+      .then(data => {
+        cuadrillasData = data;
+      })
+      .catch(err => console.error("Error al cargar cuadrillas:", err));
+    
+    // Al cambiar el select de "tipo_cuadrilla", llenar el select de cuadrillas
+    document.getElementById("tipo_cuadrilla").addEventListener("change", () => {
+      const tipoSel = document.getElementById("tipo_cuadrilla").value;
+      const selectCuadrilla = document.getElementById("cuadrillaSelect");
+      selectCuadrilla.innerHTML = "";
+      const defOpt = document.createElement("option");
+      defOpt.value = "";
+      defOpt.disabled = true;
+      defOpt.selected = true;
+      defOpt.textContent = "Seleccione...";
+      selectCuadrilla.appendChild(defOpt);
+      const cuadrillasFiltradas = cuadrillasData.filter(c => c.tipo === tipoSel);
+      cuadrillasFiltradas.forEach(c => {
+        const opt = document.createElement("option");
+        opt.value = c.cuadrillas;
+        opt.textContent = c.cuadrillas;
+        selectCuadrilla.appendChild(opt);
+      });
+    });
+    
+    // Función para crear una fila de material
+    function crearFilaMaterial() {
+      const row = document.createElement("div");
+      row.className = "material-row";
+      
+      const tipoSelect = document.createElement("select");
+      tipoSelect.required = true;
+      let defaultTipo = document.createElement("option");
+      defaultTipo.value = "";
+      defaultTipo.textContent = "Tipo...";
+      defaultTipo.disabled = true;
+      defaultTipo.selected = true;
+      tipoSelect.appendChild(defaultTipo);
+      tiposUnicos.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t;
+        opt.textContent = t;
+        tipoSelect.appendChild(opt);
+      });
+      
+      const materialSelect = document.createElement("select");
+      materialSelect.required = true;
+      let defaultMat = document.createElement("option");
+      defaultMat.value = "";
+      defaultMat.textContent = "Material...";
+      defaultMat.disabled = true;
+      defaultMat.selected = true;
+      materialSelect.appendChild(defaultMat);
+      
+      const codigoInput = document.createElement("input");
+      codigoInput.type = "text";
+      codigoInput.placeholder = "Código";
+      codigoInput.readOnly = true;
+      
+      const unidadInput = document.createElement("input");
+      unidadInput.type = "text";
+      unidadInput.placeholder = "Unidad";
+      unidadInput.readOnly = true;
+      
+      const cantidadInput = document.createElement("input");
+      cantidadInput.type = "number";
+      cantidadInput.placeholder = "Cantidad";
+      cantidadInput.required = true;
+      
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.textContent = "Eliminar";
+      removeBtn.addEventListener("click", () => row.remove());
+      
+      tipoSelect.addEventListener("change", () => {
+        materialSelect.innerHTML = "";
+        let def = document.createElement("option");
+        def.value = "";
+        def.textContent = "Material...";
+        def.disabled = true;
+        def.selected = true;
+        materialSelect.appendChild(def);
+        const tipoSel = tipoSelect.value;
+        const matsFiltrados = materialesData.filter(m => m.tipo === tipoSel);
+        matsFiltrados.forEach(m => {
+          const opt = document.createElement("option");
+          opt.value = m.descripcion;
+          opt.textContent = m.descripcion;
+          materialSelect.appendChild(opt);
+        });
+        codigoInput.value = "";
+        unidadInput.value = "";
+      });
+      
+      materialSelect.addEventListener("change", () => {
+        const tipoSel = tipoSelect.value;
+        const descSel = materialSelect.value;
+        const encontrado = materialesData.find(m =>
+          m.tipo === tipoSel && m.descripcion === descSel
+        );
+        if (encontrado) {
+          codigoInput.value = encontrado.codigoSAP;
+          unidadInput.value = encontrado.unidad;
+        } else {
+          codigoInput.value = "";
+          unidadInput.value = "";
+        }
+      });
+      
+      row.appendChild(tipoSelect);
+      row.appendChild(materialSelect);
+      row.appendChild(codigoInput);
+      row.appendChild(unidadInput);
+      row.appendChild(cantidadInput);
+      row.appendChild(removeBtn);
+      
+      return row;
+    }
+    
+    document.getElementById("btnAgregarMaterial").addEventListener("click", () => {
+      document.getElementById("lista_materiales").appendChild(crearFilaMaterial());
+    });
+    
+    function captarCoordenadas() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+          document.getElementById("lat").value = position.coords.latitude;
+          document.getElementById("lon").value = position.coords.longitude;
+        }, function(error) {
+          alert("No se pudieron obtener las coordenadas: " + error.message);
+        });
+      } else {
+        alert("Geolocalización no soportada en este navegador.");
+      }
+    }
+    
+    // Función para cargar los reportes y mostrarlos en un mapa
+function cargarReportes() {
+  const mensajeCarga = document.getElementById('mensaje_carga_mapa');
+  mensajeCarga.style.display = 'block'; // Muestra el mensaje al inicio
+
+  fetch(urlReportes)
+    .then(res => res.json())
+    .then(data => {
+      const grupos = {};
+      data.forEach(item => {
+        const id = item.reporte;
+        if (!grupos[id]) {
+          grupos[id] = [];
+        }
+        grupos[id].push(item);
+      });
+
+      const map = L.map('map_reportes').setView([15.5, -87.5], 7);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+      setTimeout(() => { map.invalidateSize(); }, 200);
+
+      Object.keys(grupos).forEach(id => {
+        const grupo = grupos[id];
+        const primerRegistro = grupo[0];
+        const lat = parseFloat(primerRegistro.lat);
+        const lon = parseFloat(primerRegistro.lon);
+        if (!isNaN(lat) && !isNaN(lon)) {
+          const marker = L.marker([lat, lon]).addTo(map);
+          marker.on('click', function() {
+            mostrarDetalleReporte(grupo);
+          });
+        }
+      });
+
+      // Ocultar mensaje cuando termine de cargar todo
+      mensajeCarga.style.display = 'none';
+    })
+    .catch(err => {
+      console.error("Error al cargar reportes:", err);
+      mensajeCarga.textContent = "Error al cargar los reportes.";
+    });
+}
+
+    
+    // Función para mostrar en el panel de detalle la información del reporte
+    function mostrarDetalleReporte(grupo) {
+      // Se asume que todos los registros del grupo comparten la información general
+      const registro = grupo[0];
+      let html = `
+        <h4>Reporte: ${registro.reporte}</h4>
+        <p><strong>Fecha Mantenimiento:</strong> ${registro["fecha_mantenimiento"]}</p>
+        <p><strong>Circuito:</strong> ${registro.circuito}</p>
+        <p><strong>Supervisor:</strong> ${registro.supervisor}</p>
+        <p><strong>Cuadrilla:</strong> ${registro.cuadrilla}</p>
+        <p><strong>Observaciones:</strong> ${registro.observaciones}</p>
+        <h5>Materiales Utilizados:</h5>
+      `;
+      grupo.forEach((item, index) => {
+        html += `<p><em>Material ${index+1}:</em> Tipo: ${item["material_tipo"]} | Descripción: ${item["material_descripcion"]} | Código: ${item["material_codigo"]} | Unidad: ${item["material_unidad"]} | Cantidad: ${item["material_cantidad"]}</p>`;
+      });
+      document.getElementById("detalle_reporte").innerHTML = html;
+    }
+    
+    // Manejo del envío del formulario de reporte
+    document.getElementById("form_reporte").addEventListener("submit", function(e) {
+      e.preventDefault();
+      document.getElementById("loadingPopup").style.display = "block";
+      
+      const materiales = [];
+      document.querySelectorAll("#lista_materiales .material-row").forEach(row => {
+        const elems = row.querySelectorAll("select, input");
+        const tipoValue = elems[0].value;
+        const descValue = elems[1].value;
+        const codValue  = elems[2].value;
+        const uniValue  = elems[3].value;
+        const cantValue = elems[4].value;
+        materiales.push({
+          tipo: tipoValue,
+          descripcion: descValue,
+          codigo: codValue,
+          unidad: uniValue,
+          cantidad: cantValue
+        });
+      });
+      const cuadrillaSeleccionada = document.getElementById("cuadrillaSelect").value;
+      const datos = {
+        reporte: document.getElementById("reporte_mant").value,
+        fecha_mantenimiento: document.getElementById("fecha_mantenimiento").value,
+        circuito: document.getElementById("circuito").value,
+        materiales: materiales,
+        lat: document.getElementById("lat").value,
+        lon: document.getElementById("lon").value,
+        supervisor: document.getElementById("supervisor").value,
+        cuadrilla: cuadrillaSeleccionada,
+        observaciones: document.getElementById("observaciones").value
+      };
+      console.log("Datos a enviar:", datos);
+      fetch(urlGuardar, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(datos)
+      })
+      .then(() => {
+        document.getElementById("loadingPopup").style.display = "none";
+        alert("Reporte guardado exitosamente.");
+        document.getElementById("form_reporte").reset();
+        document.getElementById("lista_materiales").innerHTML = "";
+      })
+      .catch(error => {
+        document.getElementById("loadingPopup").style.display = "none";
+        console.error("Error al guardar reporte:", error);
+        alert("Error al guardar reporte.");
+      });
+    });
+    
+  </script>
+  <div id="loadingPopup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(0,0,0,0.7); color:#fff; padding:20px; font-size:18px; border-radius:10px; z-index:1000;">
+    Guardando información... Por favor, espere.
+  </div>
+</body>
+</html>
