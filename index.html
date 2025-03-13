@@ -403,6 +403,7 @@ btnVer.addEventListener("click", () => {
     }, 50);
   }, 500);
 });
+
     
     btnCsv.addEventListener("click", () => {
       alert("Aquí se cargará un archivo Excel/CSV (en construcción).");
@@ -438,6 +439,7 @@ btnVer.addEventListener("click", () => {
     let materialesData = [];
     let tiposUnicos = [];
     let cuadrillasData = [];
+    let map;
     
     // Cargar materiales
     document.getElementById("btnAgregarMaterial").disabled = true;
@@ -628,7 +630,7 @@ btnVer.addEventListener("click", () => {
     // Función para cargar los reportes y mostrarlos en un mapa
 function cargarReportes() {
   const mensajeCarga = document.getElementById('mensaje_carga_mapa');
-  mensajeCarga.style.display = 'block'; // Muestra el mensaje al inicio
+  mensajeCarga.style.display = 'block';
 
   fetch(urlReportes)
     .then(res => res.json())
@@ -642,7 +644,13 @@ function cargarReportes() {
         grupos[id].push(item);
       });
 
-      const map = L.map('map_reportes').setView([15.5, -87.5], 7);
+      // Si el mapa ya existe, destrúyelo antes de crear uno nuevo
+      if (map) {
+        map.remove();
+      }
+
+      // Luego inicializa nuevamente el mapa
+      map = L.map('map_reportes').setView([15.5, -87.5], 7);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
       setTimeout(() => { map.invalidateSize(); }, 200);
 
@@ -659,7 +667,6 @@ function cargarReportes() {
         }
       });
 
-      // Ocultar mensaje cuando termine de cargar todo
       mensajeCarga.style.display = 'none';
     })
     .catch(err => {
