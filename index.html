@@ -702,7 +702,7 @@ function filtrarReportes() {
   fechaFin.setHours(23,59,59); // Incluye el día final completo
 
   const datosFiltrados = datosReportes.filter(item => {
-    const fechaRegistro = new Date(item["fecha_de_registro"]);
+    const fechaRegistro = new Date(item["fecha_mantenimiento"]);
     return fechaRegistro >= fechaInicio && fechaRegistro <= fechaFin;
   });
 
