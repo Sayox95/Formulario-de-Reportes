@@ -444,7 +444,7 @@ btnVer.addEventListener("click", () => {
     // Nuevo endpoint para guardar reportes
     const urlGuardar = "https://script.google.com/macros/s/AKfycbx6CehrV-xiMuY4sJpXeQChOjGyBPgXn2JGNCCi9pGO3eNx1pEC-MwfxlVVr12YhOkX/exec";
     // Nuevo endpoint para obtener los reportes guardados (se asume que tienes un doGet que devuelve la hoja REPORTES en JSON)
-    const urlReportes = "https://script.google.com/macros/s/AKfycbz0ln5v0XUJD2nH-uPsN-tpHwUWVy-QveQEKG5Y0-5IaFUtbCn59rhzRUxoRvWSxsUSFQ/exec"; // Reemplaza con tu URL real para obtener reportes.
+    const urlReportes = "https://script.google.com/macros/s/AKfycby4NzEHYi0pSbreO04D6H_fOOZ-9W96LDVBhcHqZfOHmAfwcxecDUzSRn-YWM_X1LJA1Q/exec"; // Reemplaza con tu URL real para obtener reportes.
     
     let materialesData = [];
     let tiposUnicos = [];
@@ -701,19 +701,17 @@ function filtrarReportes() {
     return;
   }
 
-  // Extrae únicamente la fecha sin hora para comparación exacta
-  const fechaInicio = new Date(inicio + "T00:00:00");
-  const fechaFin = new Date(fin);
-  fechaFin.setHours(23,59,59);
+  // Convertimos el formato del input de yyyy-mm-dd a dd/mm/yyyy
+  const fechaInicioFormateada = inicio.split("-").reverse().join("/");
+  const fechaFinFormateada = fin.split("-").reverse().join("/");
 
   const datosFiltrados = datosReportes.filter(item => {
-    const fechaRegistro = new Date(item["fecha_mantenimiento"].substring(0,10)); // ← ajustado aquí
-    return fechaRegistro >= fechaInicio && fechaRegistro <= fechaFin;
+    const fechaItem = item["fecha_mantenimiento"].trim(); // Asegura que no tenga espacios
+    return fechaItem >= fechaInicioFormateada && fechaItem <= fechaFinFormateada;
   });
 
   cargarMapa(datosFiltrados);
 }
-
     
     // Función para mostrar en el panel de detalle la información del reporte
 function mostrarDetalleReporte(grupo) {
