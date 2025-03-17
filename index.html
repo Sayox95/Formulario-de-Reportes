@@ -330,7 +330,13 @@
 <div id="ver_reportes" class="fade hidden">
   <button type="button" id="btn_regresar_reportes" onclick="regresarMenu()">← Regresar</button>
   <h3>Reportes Realizados</h3>
-  
+  <!-- NUEVO FILTRO DE FECHAS -->
+<div style="text-align:center; margin-bottom:15px;">
+  <label>Desde: <input type="date" id="fecha_inicio"></label>
+  <label>Hasta: <input type="date" id="fecha_fin"></label>
+  <button onclick="filtrarReportes()">Filtrar</button>
+</div>
+
   <!-- MENSAJE DE CARGA -->
   <div id="mensaje_carga_mapa" style="text-align:center; margin-bottom:10px; font-weight:bold;">
     Cargando Información...
@@ -628,6 +634,8 @@ btnVer.addEventListener("click", () => {
     }
     
     // Función para cargar los reportes y mostrarlos en un mapa
+let datosReportes = []; // Variable global (poner justo arriba de esta función)
+
 function cargarReportes() {
   const mensajeCarga = document.getElementById('mensaje_carga_mapa');
   mensajeCarga.style.display = 'block';
@@ -635,38 +643,100 @@ function cargarReportes() {
   fetch(urlReportes)
     .then(res => res.json())
     .then(data => {
-      const grupos = {};
-      data.forEach(item => {
-        const id = item.reporte;
-        if (!grupos[id]) {
-          grupos[id] = [];
-        }
-        grupos[id].push(item);
+      datosReportes = data; // Almacena globalmente los datos
+      cargarMapa(datosReportes); // Carga inicial con todos los datos
+      mensajeCarga.style.display = 'none';
+    })
+    .catch(err => {
+      console.error("Error al cargar reportes:", err);
+      mensajeCarga.textContent = "Error al cargar los reportes.";
+    });
+}
+
+// Nueva función que recarga el mapa con datos específicos (pegar justo después de cargarReportes())
+// Función para cargar el mapa con datos específicos
+function cargarMapa(datos) {
+  if (map) {
+    map.remove();
+  }
+
+  map = L.map('map_reportes').setView([15.5, -87.5], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  setTimeout(() => { map.invalidateSize(); }, 200);
+
+  const grupos = {};
+  datos.forEach(item => {
+    const id = item.reporte;
+    if (!grupos[id]) {
+      grupos[id] = [];
+    }
+    grupos[id].push(item);
+  });
+
+  Object.keys(grupos).forEach(id => {
+    const grupo = grupos[id];
+    const primerRegistro = grupo[0];
+    const lat = parseFloat(primerRegistro.lat);
+    const lon = parseFloat(primerRegistro.lon);
+    if (!isNaN(lat) && !isNaN(lon)) {
+      const marker = L.marker([lat, lon]).addTo(map);
+      marker.on('click', function() {
+        mostrarDetalleReporte(grupo);
       });
+    }
+  });
+}
 
-      // Si el mapa ya existe, destrúyelo antes de crear uno nuevo
-      if (map) {
-        map.remove();
-      }
+// Función para filtrar reportes según rango de fechas
+function filtrarReportes() {
+  const inicio = document.getElementById("fecha_inicio").value;
+  const fin = document.getElementById("fecha_fin").value;
 
-      // Luego inicializa nuevamente el mapa
-      map = L.map('map_reportes').setView([15.5, -87.5], 7);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-      setTimeout(() => { map.invalidateSize(); }, 200);
+  if (!inicio || !fin) {
+    alert("Debes seleccionar ambas fechas");
+    return;
+  }
 
-      Object.keys(grupos).forEach(id => {
-        const grupo = grupos[id];
-        const primerRegistro = grupo[0];
-        const lat = parseFloat(primerRegistro.lat);
-        const lon = parseFloat(primerRegistro.lon);
-        if (!isNaN(lat) && !isNaN(lon)) {
-          const marker = L.marker([lat, lon]).addTo(map);
-          marker.on('click', function() {
-            mostrarDetalleReporte(grupo);
-          });
-        }
+  const fechaInicio = new Date(inicio);
+  const fechaFin = new Date(fin);
+  fechaFin.setHours(23,59,59); // Incluye el día final completo
+
+  const datosFiltrados = datosReportes.filter(item => {
+    const fechaRegistro = new Date(item["fecha_de_registro"]);
+    return fechaRegistro >= fechaInicio && fechaRegistro <= fechaFin;
+  });
+
+  cargarMapa(datosFiltrados);
+}
+
+
+
+  map = L.map('map_reportes').setView([15.5, -87.5], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  setTimeout(() => { map.invalidateSize(); }, 200);
+
+  const grupos = {};
+  datos.forEach(item => {
+    const id = item.reporte;
+    if (!grupos[id]) {
+      grupos[id] = [];
+    }
+    grupos[id].push(item);
+  });
+
+  Object.keys(grupos).forEach(id => {
+    const grupo = grupos[id];
+    const primerRegistro = grupo[0];
+    const lat = parseFloat(primerRegistro.lat);
+    const lon = parseFloat(primerRegistro.lon);
+    if (!isNaN(lat) && !isNaN(lon)) {
+      const marker = L.marker([lat, lon]).addTo(map);
+      marker.on('click', function() {
+        mostrarDetalleReporte(grupo);
       });
-
+    }
+  });
+}
       mensajeCarga.style.display = 'none';
     })
     .catch(err => {
@@ -677,23 +747,24 @@ function cargarReportes() {
 
     
     // Función para mostrar en el panel de detalle la información del reporte
-    function mostrarDetalleReporte(grupo) {
-      // Se asume que todos los registros del grupo comparten la información general
-      const registro = grupo[0];
-      let html = `
-        <h4>Reporte: ${registro.reporte}</h4>
-        <p><strong>Fecha Mantenimiento:</strong> ${registro["fecha_mantenimiento"]}</p>
-        <p><strong>Circuito:</strong> ${registro.circuito}</p>
-        <p><strong>Supervisor:</strong> ${registro.supervisor}</p>
-        <p><strong>Cuadrilla:</strong> ${registro.cuadrilla}</p>
-        <p><strong>Observaciones:</strong> ${registro.observaciones}</p>
-        <h5>Materiales Utilizados:</h5>
-      `;
-      grupo.forEach((item, index) => {
-        html += `<p><em>Material ${index+1}:</em> Descripción: ${item["material_descripcion"]} | Cantidad: ${item["material_cantidad"]}</p>`;
-      });
-      document.getElementById("detalle_reporte").innerHTML = html;
-    }
+function mostrarDetalleReporte(grupo) {
+  const registro = grupo[0];
+  let html = `
+    <h4>Reporte: ${registro.reporte}</h4>
+    <p><strong>Fecha Mantenimiento:</strong> ${registro["fecha_mantenimiento"]}</p>
+    <p><strong>Circuito:</strong> ${registro.circuito}</p>
+    <p><strong>Supervisor:</strong> ${registro.supervisor}</p>
+    <p><strong>Cuadrilla:</strong> ${registro.cuadrilla}</p>
+    <p><strong>Observaciones:</strong> ${registro.observaciones}</p>
+    <h5>Materiales Utilizados:</h5>
+  `; // 🚩👈 Asegúrate de tener exactamente esto
+
+  grupo.forEach((item, index) => {
+    html += `<p><em>Material ${index+1}:</em> Descripción: ${item["material_descripcion"]} | Cantidad: ${item["material_cantidad"]}</p>`;
+  });
+  document.getElementById("detalle_reporte").innerHTML = html;
+}
+
     
     // Manejo del envío del formulario de reporte
     document.getElementById("form_reporte").addEventListener("submit", function(e) {
