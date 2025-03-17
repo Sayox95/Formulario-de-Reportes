@@ -337,6 +337,15 @@
   <button onclick="filtrarReportes()">Filtrar</button>
 </div>
 
+<!-- NUEVO FILTRO DE CIRCUITO -->
+<div style="text-align:center; margin-bottom:15px;">
+  <label>Seleccionar Circuito: 
+    <select id="filtro_circuito" onchange="filtrarReportes()">
+      <option value="">-- Todos --</option>
+    </select>
+  </label>
+</div>
+
   <!-- MENSAJE DE CARGA -->
   <div id="mensaje_carga_mapa" style="text-align:center; margin-bottom:10px; font-weight:bold;">
     Cargando Información...
@@ -407,6 +416,9 @@ btnVer.addEventListener("click", () => {
       // Resetea los filtros de fechas
       document.getElementById("fecha_inicio").value = "";
       document.getElementById("fecha_fin").value = "";
+
+      // **Resetea el filtro de circuito**
+      document.getElementById("filtro_circuito").selectedIndex = 0;
 
       // Luego vuelve a cargar reportes
       cargarReportes();
@@ -647,8 +659,20 @@ function cargarReportes() {
   fetch(urlReportes)
     .then(res => res.json())
     .then(data => {
-      datosReportes = data; // Almacena globalmente los datos
+      datosReportes = data; // Guarda globalmente los datos
       cargarMapa(datosReportes); // Carga inicial con todos los datos
+
+      // Obtener circuitos únicos y llenar el select
+      const circuitosUnicos = [...new Set(datosReportes.map(item => item.circuito))];
+      const selectCircuito = document.getElementById("filtro_circuito");
+      selectCircuito.innerHTML = `<option value="">-- Todos --</option>`; // Resetear lista
+      circuitosUnicos.forEach(circuito => {
+        const option = document.createElement("option");
+        option.value = circuito;
+        option.textContent = circuito;
+        selectCircuito.appendChild(option);
+      });
+
       mensajeCarga.style.display = 'none';
     })
     .catch(err => {
@@ -656,6 +680,7 @@ function cargarReportes() {
       mensajeCarga.textContent = "Error al cargar los reportes.";
     });
 }
+
 
 // Nueva función que recarga el mapa con datos específicos (pegar justo después de cargarReportes())
 // Función para cargar el mapa con datos específicos
@@ -695,23 +720,23 @@ function cargarMapa(datos) {
 function filtrarReportes() {
   const inicio = document.getElementById("fecha_inicio").value;
   const fin = document.getElementById("fecha_fin").value;
-
-  if (!inicio || !fin) {
-    alert("Debes seleccionar ambas fechas");
-    return;
-  }
+  const circuitoSeleccionado = document.getElementById("filtro_circuito").value;
 
   // Convertimos el formato del input de yyyy-mm-dd a dd/mm/yyyy
-  const fechaInicioFormateada = inicio.split("-").reverse().join("/");
-  const fechaFinFormateada = fin.split("-").reverse().join("/");
+  const fechaInicioFormateada = inicio ? inicio.split("-").reverse().join("/") : "";
+  const fechaFinFormateada = fin ? fin.split("-").reverse().join("/") : "";
 
   const datosFiltrados = datosReportes.filter(item => {
     const fechaItem = item["fecha_mantenimiento"].trim(); // Asegura que no tenga espacios
-    return fechaItem >= fechaInicioFormateada && fechaItem <= fechaFinFormateada;
+    const cumpleFecha = (!inicio || !fin) || (fechaItem >= fechaInicioFormateada && fechaItem <= fechaFinFormateada);
+    const cumpleCircuito = circuitoSeleccionado === "" || item.circuito === circuitoSeleccionado;
+    
+    return cumpleFecha && cumpleCircuito;
   });
 
   cargarMapa(datosFiltrados);
 }
+
     
     // Función para mostrar en el panel de detalle la información del reporte
 function mostrarDetalleReporte(grupo) {
