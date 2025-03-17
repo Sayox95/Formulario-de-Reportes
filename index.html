@@ -404,6 +404,10 @@ btnVer.addEventListener("click", () => {
       document.getElementById('map_reportes').innerHTML = "";
       document.getElementById('detalle_reporte').innerHTML = "";
 
+      // Resetea los filtros de fechas
+      document.getElementById("fecha_inicio").value = "";
+      document.getElementById("fecha_fin").value = "";
+
       // Luego vuelve a cargar reportes
       cargarReportes();
     }, 50);
@@ -697,18 +701,18 @@ function filtrarReportes() {
     return;
   }
 
-  const fechaInicio = new Date(inicio);
+  // Extrae únicamente la fecha sin hora para comparación exacta
+  const fechaInicio = new Date(inicio + "T00:00:00");
   const fechaFin = new Date(fin);
-  fechaFin.setHours(23,59,59); // Incluye el día final completo
+  fechaFin.setHours(23,59,59);
 
   const datosFiltrados = datosReportes.filter(item => {
-    const fechaRegistro = new Date(item["fecha_mantenimiento"]);
+    const fechaRegistro = new Date(item["fecha_mantenimiento"].substring(0,10)); // ← ajustado aquí
     return fechaRegistro >= fechaInicio && fechaRegistro <= fechaFin;
   });
 
   cargarMapa(datosFiltrados);
 }
-
 
     
     // Función para mostrar en el panel de detalle la información del reporte
