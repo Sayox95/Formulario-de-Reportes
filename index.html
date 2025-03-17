@@ -710,41 +710,6 @@ function filtrarReportes() {
 }
 
 
-
-  map = L.map('map_reportes').setView([15.5, -87.5], 7);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-  setTimeout(() => { map.invalidateSize(); }, 200);
-
-  const grupos = {};
-  datos.forEach(item => {
-    const id = item.reporte;
-    if (!grupos[id]) {
-      grupos[id] = [];
-    }
-    grupos[id].push(item);
-  });
-
-  Object.keys(grupos).forEach(id => {
-    const grupo = grupos[id];
-    const primerRegistro = grupo[0];
-    const lat = parseFloat(primerRegistro.lat);
-    const lon = parseFloat(primerRegistro.lon);
-    if (!isNaN(lat) && !isNaN(lon)) {
-      const marker = L.marker([lat, lon]).addTo(map);
-      marker.on('click', function() {
-        mostrarDetalleReporte(grupo);
-      });
-    }
-  });
-}
-      mensajeCarga.style.display = 'none';
-    })
-    .catch(err => {
-      console.error("Error al cargar reportes:", err);
-      mensajeCarga.textContent = "Error al cargar los reportes.";
-    });
-}
-
     
     // Función para mostrar en el panel de detalle la información del reporte
 function mostrarDetalleReporte(grupo) {
