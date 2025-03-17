@@ -690,7 +690,7 @@ function cargarReportes() {
         <h5>Materiales Utilizados:</h5>
       `;
       grupo.forEach((item, index) => {
-        html += `<p><em>Material ${index+1}:</em> Tipo: ${item["material_tipo"]} | Descripción: ${item["material_descripcion"]} | Código: ${item["material_codigo"]} | Unidad: ${item["material_unidad"]} | Cantidad: ${item["material_cantidad"]}</p>`;
+        html += `<p><em>Material ${index+1}:</em> Descripción: ${item["material_descripcion"]} | Cantidad: ${item["material_cantidad"]}</p>`;
       });
       document.getElementById("detalle_reporte").innerHTML = html;
     }
